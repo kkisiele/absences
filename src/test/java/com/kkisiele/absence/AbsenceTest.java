@@ -5,6 +5,7 @@ import org.junit.jupiter.api.function.Executable;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 
 import static com.kkisiele.absence.AbsenceState.APPROVAL_PENDING;
 import static com.kkisiele.absence.AbsenceState.APPROVED;
@@ -15,82 +16,120 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AbsenceTest {
-    private Clock clock = fixedClock(2020, 11, 11);
+    private final Clock clock = fixedClock(2020, 11, 11);
+    private Employee employee;
+    private Allowance allowance;
 
     @Test
     void requestingSicknessResultsInApprovedAbsence() {
         //given
-        var employee = new Employee(new AllWorkingDaysCalendar(), clock);
+        employee(hasUnlimitedSicknessDays());
         //when
-        employee.request(periodOf3Days(), SICKNESS);
+        requestSicknessDays(3);
         //then
-        assertEquals(1, employee
-                .absences()
-                .size());
-        assertEquals(APPROVED, employee
-                .absences()
-                .get(0)
-                .state());
+        assertAbsenceRequestedInState(APPROVED);
     }
 
     @Test
     void requestingHolidayByEmployeeResultsInApprovalPendingAbsence() {
         //given
-        var allowance = new Allowance(26);
-        var employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        employee.register(HOLIDAY, allowance);
+        employee(hasLimitedHolidayDays(26));
         //when
-        employee.request(periodOf3Days(), HOLIDAY);
+        requestHolidayDays(3);
         //then
-        assertEquals(1, employee
-                .absences()
-                .size());
-        assertEquals(APPROVAL_PENDING, employee
-                .absences()
-                .get(0)
-                .state());
+        assertAbsenceRequestedInState(APPROVAL_PENDING);
     }
 
     @Test
     void cannotRequestWhenPeriodOverlapsAnyOfExistingAbsences() {
         //given
-        var employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        employee.request(periodOf3Days(), SICKNESS);
+        employee(hasLimitedHolidayDays(26));
+        requestSicknessDays(3);
         //when
-        employee.request(periodOf3Days(), HOLIDAY);
+        requestHolidayDays(3);
         //then
-        assertEquals(1, employee
-                .absences()
-                .size());
+        assertNumberOfRequestedAbsences(1);
     }
 
     @Test
     void requestingHolidayDeducesRemainingDays() {
         //given
-        var allowance = new Allowance(26);
-        var employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        employee.register(HOLIDAY, allowance);
+        employee(hasLimitedHolidayDays(26));
         //when
-        employee.request(periodOf3Days(), HOLIDAY);
+        requestHolidayDays(3);
         //then
-        assertEquals(23, allowance.remainingDays());
+        assertNumberOfRemainingHolidayDays(23);
     }
 
     @Test
     void cannotRequestMoreDaysThanAvailable() {
         //given
-        var employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        employee.register(HOLIDAY, new Allowance(2));
+        employee(hasLimitedHolidayDays(2));
         //when
-        Executable code = () -> employee.request(periodOf3Days(), HOLIDAY);
+        Executable code = () -> requestHolidayDays(3);
         //then
         assertThrows(RequestRejected.class, code);
     }
 
-    private DatePeriod periodOf3Days() {
-        return new DatePeriod(
-                LocalDate.of(2020, 11, 16),
-                LocalDate.of(2020, 11, 18)
-        );
+    private void employee(AllowanceOfType allowanceOfType) {
+        var employee = new Employee(new AllWorkingDaysCalendar(), clock);
+        this.employee = employee;
+        if (allowanceOfType != null) {
+            employee.register(allowanceOfType.type, allowanceOfType.allowance);
+            this.allowance = allowanceOfType.allowance;
+        }
+    }
+
+    private AllowanceOfType hasLimitedHolidayDays(int days) {
+        var allowance = new Allowance(days);
+        return new AllowanceOfType(allowance, HOLIDAY);
+    }
+
+    private AllowanceOfType hasUnlimitedSicknessDays() {
+        return null;
+    }
+
+    private void requestHolidayDays(int days) {
+        request(days, HOLIDAY);
+    }
+
+    private void requestSicknessDays(int days) {
+        request(days, SICKNESS);
+    }
+
+    private void request(int days, AbsenceType type) {
+        employee.request(daysToSomePeriod(days), type);
+    }
+
+    private DatePeriod daysToSomePeriod(int days) {
+        final LocalDate now = LocalDate.now(clock);
+        return new DatePeriod(now, now.plusDays(days - 1));
+    }
+
+    private void assertAbsenceRequestedInState(AbsenceState state) {
+        assertNumberOfRequestedAbsences(1);
+        assertEquals(state, absences().get(0).state());
+    }
+
+    private void assertNumberOfRequestedAbsences(int count) {
+        assertEquals(count, absences().size());
+    }
+
+    private List<Absence> absences() {
+        return employee.absences();
+    }
+
+    private void assertNumberOfRemainingHolidayDays(int days) {
+        assertEquals(days, allowance.remainingDays());
+    }
+
+    private static class AllowanceOfType {
+        public final Allowance allowance;
+        public final AbsenceType type;
+
+        public AllowanceOfType(Allowance allowance, AbsenceType type) {
+            this.allowance = allowance;
+            this.type = type;
+        }
     }
 }
