@@ -11,11 +11,11 @@ public class Allowance {
         return remainingDays;
     }
 
-    public boolean reduceBy(int days) {
-        if (days > remainingDays) {
-            return false;
-        }
+    public boolean hasEnoughDays(int days) {
+        return remainingDays >= days;
+    }
+
+    public void reduceBy(int days) {
         remainingDays -= days;
-        return true;
     }
 }

@@ -27,22 +27,16 @@ public class Employee {
         }
         int requestedDays = period.numberOfWorkingDays(calendar);
         if (type.deductible()) {
-            boolean ok = allowances
-                    .get(type)
-                    .reduceBy(requestedDays);
-            if (!ok) {
+            if (!allowances.get(type).hasEnoughDays(requestedDays)) {
                 throw new RequestRejected();
             }
+            allowances.get(type).reduceBy(requestedDays);
         }
-        absences.add(new Absence(period, requestedDays, type, type
-                .workflow()
-                .initialState()));
+        absences.add(new Absence(period, requestedDays, type, type.workflow().initialState()));
     }
 
     private boolean overlaps(DatePeriod period) {
-        return absences
-                .stream()
-                .anyMatch(absence -> absence.overlaps(period));
+        return absences.stream().anyMatch(absence -> absence.overlaps(period));
     }
 
     public List<Absence> absences() {
