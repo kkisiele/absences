@@ -1,10 +1,7 @@
 package com.kkisiele.absence;
 
 import java.time.Clock;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Employee {
     private final Calendar calendar;
@@ -25,14 +22,20 @@ public class Employee {
         if (overlaps(period)) {
             return;
         }
-        int requestedDays = period.numberOfWorkingDays(calendar);
+        int deductibleDays = period.numberOfWorkingDays(calendar);
         if (type.deductible()) {
-            if (!allowances.get(type).hasEnoughDays(requestedDays)) {
+            if (!allowances.get(type).hasEnoughDays(deductibleDays)) {
                 throw new RequestRejected();
             }
-            allowances.get(type).reduceBy(requestedDays);
+            allowances.get(type).request(deductibleDays);
         }
-        absences.add(new Absence(period, requestedDays, type, type.workflow().initialState()));
+        absences.add(new Absence(period, deductibleDays, type, type.workflow().initialState()));
+    }
+
+    public void cancel(UUID absenceId) {
+        Absence absence = absences.stream().filter(a -> a.id().equals(absenceId)).findAny().get();
+        allowances.get(absence.type()).cancel(absence.days());
+        allowances.remove(absence);
     }
 
     private boolean overlaps(DatePeriod period) {

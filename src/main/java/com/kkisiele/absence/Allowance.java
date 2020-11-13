@@ -15,7 +15,11 @@ public class Allowance {
         return remainingDays >= days;
     }
 
-    public void reduceBy(int days) {
+    public void request(int days) {
         remainingDays -= days;
+    }
+
+    public void cancel(int days) {
+        remainingDays += days;
     }
 }

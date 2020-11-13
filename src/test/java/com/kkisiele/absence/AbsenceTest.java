@@ -71,6 +71,17 @@ public class AbsenceTest {
         assertThrows(RequestRejected.class, code);
     }
 
+    @Test
+    void cancellingAbsenceRefundRequestedDays() {
+        //given
+        employee(hasLimitedHolidayDays(26));
+        requestHolidayDays(3);
+        //when
+        employee.cancel(absences().get(0).id());
+        //then
+        assertNumberOfRemainingHolidayDays(26);
+    }
+
     private void employee(AllowanceOfType allowanceOfType) {
         var employee = new Employee(new AllWorkingDaysCalendar(), clock);
         this.employee = employee;
