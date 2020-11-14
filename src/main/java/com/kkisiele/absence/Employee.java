@@ -35,7 +35,7 @@ public class Employee {
     public void cancel(UUID absenceId) {
         Absence absence = absences.stream().filter(a -> a.id().equals(absenceId)).findAny().get();
         allowances.get(absence.type()).cancel(absence.days());
-        allowances.remove(absence);
+        absences.remove(absence);
     }
 
     private boolean overlaps(DatePeriod period) {
