@@ -11,6 +11,14 @@ public final class DatePeriod {
         this.end = end;
     }
 
+    public LocalDate start() {
+        return start;
+    }
+
+    public LocalDate end() {
+        return end;
+    }
+
     public int numberOfWorkingDays(Calendar calendar) {
         int days = 0;
         LocalDate day = start;
@@ -24,5 +32,9 @@ public final class DatePeriod {
     public boolean overlaps(DatePeriod period) {
         boolean disjunctive = period.start.isAfter(end) || period.end.isBefore(start);
         return !disjunctive;
+    }
+
+    public boolean contains(LocalDate day) {
+        return day.compareTo(start) >= 0 && day.compareTo(end) <= 0;
     }
 }

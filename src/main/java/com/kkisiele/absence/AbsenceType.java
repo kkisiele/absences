@@ -5,7 +5,8 @@ import static com.kkisiele.absence.AbsenceState.APPROVED;
 
 public enum AbsenceType {
     SICKNESS(new DefaultWorkflow(APPROVED), false),
-    HOLIDAY(new DefaultWorkflow(APPROVAL_PENDING), true);
+    HOLIDAY(new DefaultWorkflow(APPROVAL_PENDING), true),
+    SPECIAL(new DefaultWorkflow(APPROVAL_PENDING), true);
 
     private final AbsenceWorkflow workflow;
     private final boolean deductible;

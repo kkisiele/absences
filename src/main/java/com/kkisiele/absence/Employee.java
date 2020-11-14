@@ -8,6 +8,7 @@ public class Employee {
     private final Clock clock;
     private final List<Absence> absences = new LinkedList<>();
     private Map<AbsenceType, Allowance> allowances = new HashMap<>();
+    private AbsencePolicy policy = AbsencePolicy.ALWAYS;
 
     public Employee(Calendar calendar, Clock clock) {
         this.calendar = calendar;
@@ -18,23 +19,21 @@ public class Employee {
         allowances.put(type, allowance);
     }
 
-    public void request(DatePeriod period, AbsenceType type) {
-        if (overlaps(period)) {
+    public void request(RequestAbsence command) {
+        if (overlaps(command.period())) {
             return;
         }
-        int deductibleDays = period.numberOfWorkingDays(calendar);
-        if (type.deductible()) {
-            if (!allowances.get(type).hasEnoughDays(deductibleDays)) {
-                throw new RequestRejected();
-            }
-            allowances.get(type).request(deductibleDays);
+        if (!policy.canRequest(command.period())) {
+            throw new RequestRejected();
         }
-        absences.add(new Absence(period, deductibleDays, type, type.workflow().initialState()));
+        var absence = new Absence(UUID.randomUUID());
+        absence.request(command, command.type().workflow(), allowances.get(command.type()), calendar);
+        absences.add(absence);
     }
 
     public void cancel(UUID absenceId) {
         Absence absence = absences.stream().filter(a -> a.id().equals(absenceId)).findAny().get();
-        allowances.get(absence.type()).cancel(absence.days());
+        absence.cancel();
         absences.remove(absence);
     }
 
@@ -44,5 +43,9 @@ public class Employee {
 
     public List<Absence> absences() {
         return absences;
+    }
+
+    public void setPolicy(AbsencePolicy policy) {
+        this.policy = policy;
     }
 }
