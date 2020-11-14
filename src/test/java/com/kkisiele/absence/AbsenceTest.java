@@ -6,6 +6,7 @@ import org.junit.jupiter.api.function.Executable;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.kkisiele.absence.AbsenceState.APPROVAL_PENDING;
 import static com.kkisiele.absence.AbsenceState.APPROVED;
@@ -82,22 +83,21 @@ public class AbsenceTest {
         assertNumberOfRemainingHolidayDays(26);
     }
 
-    private void employee(AllowanceOfType allowanceOfType) {
-        var employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        this.employee = employee;
-        if (allowanceOfType != null) {
-            employee.register(allowanceOfType.type, allowanceOfType.allowance);
-            this.allowance = allowanceOfType.allowance;
-        }
+    private void employee(Consumer<Employee> configureHandle) {
+        this.employee = new Employee(new AllWorkingDaysCalendar(), clock);
+        configureHandle.accept(employee);
     }
 
-    private AllowanceOfType hasLimitedHolidayDays(int days) {
-        var allowance = new Allowance(days);
-        return new AllowanceOfType(allowance, HOLIDAY);
+    private Consumer<Employee> hasLimitedHolidayDays(int days) {
+        return e -> {
+            allowance = new Allowance(days);
+            e.register(HOLIDAY, allowance);
+        };
     }
 
-    private AllowanceOfType hasUnlimitedSicknessDays() {
-        return null;
+    private Consumer<Employee> hasUnlimitedSicknessDays() {
+        return e -> {
+        };
     }
 
     private void requestHolidayDays(int days) {
@@ -132,15 +132,5 @@ public class AbsenceTest {
 
     private void assertNumberOfRemainingHolidayDays(int days) {
         assertEquals(days, allowance.remainingDays());
-    }
-
-    private static class AllowanceOfType {
-        public final Allowance allowance;
-        public final AbsenceType type;
-
-        public AllowanceOfType(Allowance allowance, AbsenceType type) {
-            this.allowance = allowance;
-            this.type = type;
-        }
     }
 }
