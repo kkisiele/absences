@@ -8,8 +8,8 @@ import java.util.List;
 class AndOperator implements AbsencePolicy {
     private final List<AbsencePolicy> policies;
 
-    public AndOperator(AbsencePolicy... policies) {
-        this.policies = List.of(policies);
+    public AndOperator(List<AbsencePolicy> policies) {
+        this.policies = List.copyOf(policies);
     }
 
     @Override

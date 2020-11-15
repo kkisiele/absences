@@ -24,9 +24,6 @@ public class Absence {
         }
 
         if (command.type().deductible()) {
-//            if (!allowance.hasEnoughDays(requestedDays)) {
-//                throw new RequestRejected();
-//            }
             allowance.decreaseBy(requestedDays);
         }
         this.period = command.period();

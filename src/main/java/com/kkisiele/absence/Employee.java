@@ -5,7 +5,7 @@ import com.kkisiele.absence.policy.AbsencePolicy;
 import java.time.Clock;
 import java.util.*;
 
-import static com.kkisiele.absence.policy.AbsencePolicies.ALWAYS_ALLOWED;
+import static com.kkisiele.absence.policy.AbsencePolicies.allowed;
 import static com.kkisiele.absence.policy.AbsencePolicies.and;
 
 public class Employee {
@@ -35,9 +35,9 @@ public class Employee {
 
     private AbsencePolicy policy() {
         if (policies.isEmpty()) {
-            return ALWAYS_ALLOWED;
+            return allowed();
         }
-        return and(policies.toArray(AbsencePolicy[]::new));
+        return and(policies);
     }
 
     public void cancel(UUID absenceId) {

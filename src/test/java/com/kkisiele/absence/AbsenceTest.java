@@ -13,8 +13,8 @@ import static com.kkisiele.absence.AbsenceState.APPROVAL_PENDING;
 import static com.kkisiele.absence.AbsenceState.APPROVED;
 import static com.kkisiele.absence.AbsenceType.*;
 import static com.kkisiele.absence.TestUtils.fixedClock;
-import static com.kkisiele.absence.policy.AbsencePolicies.ALLOWANCE_HARD_LIMIT;
 import static com.kkisiele.absence.policy.AbsencePolicies.absenceStartsIn;
+import static com.kkisiele.absence.policy.AbsencePolicies.allowanceHardLimit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -108,7 +108,7 @@ public class AbsenceTest {
 
     private void employee(Consumer<Employee>... configureHandles) {
         this.employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        employee.addPolicy(ALLOWANCE_HARD_LIMIT);
+        employee.addPolicy(allowanceHardLimit());
         for (Consumer<Employee> configure : configureHandles) {
             configure.accept(employee);
         }
