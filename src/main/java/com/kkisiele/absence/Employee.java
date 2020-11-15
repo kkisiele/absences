@@ -1,14 +1,19 @@
 package com.kkisiele.absence;
 
+import com.kkisiele.absence.policy.AbsencePolicy;
+
 import java.time.Clock;
 import java.util.*;
+
+import static com.kkisiele.absence.policy.AbsencePolicies.ALWAYS_ALLOWED;
+import static com.kkisiele.absence.policy.AbsencePolicies.and;
 
 public class Employee {
     private final Calendar calendar;
     private final Clock clock;
     private final List<Absence> absences = new LinkedList<>();
     private Map<AbsenceType, Allowance> allowances = new HashMap<>();
-    private AbsencePolicy policy = AbsencePolicy.ALWAYS;
+    private List<AbsencePolicy> policies = new LinkedList<>();
 
     public Employee(Calendar calendar, Clock clock) {
         this.calendar = calendar;
@@ -23,12 +28,16 @@ public class Employee {
         if (overlaps(command.period())) {
             return;
         }
-        if (!policy.canRequest(command.period())) {
-            throw new RequestRejected();
-        }
         var absence = new Absence(UUID.randomUUID());
-        absence.request(command, command.type().workflow(), allowances.get(command.type()), calendar);
+        absence.request(command, command.type().workflow(), allowances.get(command.type()), calendar, policy());
         absences.add(absence);
+    }
+
+    private AbsencePolicy policy() {
+        if (policies.isEmpty()) {
+            return ALWAYS_ALLOWED;
+        }
+        return and(policies.toArray(AbsencePolicy[]::new));
     }
 
     public void cancel(UUID absenceId) {
@@ -45,7 +54,7 @@ public class Employee {
         return absences;
     }
 
-    public void setPolicy(AbsencePolicy policy) {
-        this.policy = policy;
+    public void addPolicy(AbsencePolicy policy) {
+        policies.add(policy);
     }
 }

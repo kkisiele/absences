@@ -13,6 +13,8 @@ import static com.kkisiele.absence.AbsenceState.APPROVAL_PENDING;
 import static com.kkisiele.absence.AbsenceState.APPROVED;
 import static com.kkisiele.absence.AbsenceType.*;
 import static com.kkisiele.absence.TestUtils.fixedClock;
+import static com.kkisiele.absence.policy.AbsencePolicies.ALLOWANCE_HARD_LIMIT;
+import static com.kkisiele.absence.policy.AbsencePolicies.absenceStartsIn;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -86,21 +88,30 @@ public class AbsenceTest {
     @Test
     void absenceCanBeRequestedOnlyInGivenPeriod() {
         //given
-        employee(hasDeductibleDays(1, SPECIAL));
-        employee.setPolicy(new AbsenceStartDateInPeriod(datePeriod("2020-09-01", "2020-09-11")));
+        employee(
+                hasDeductibleDays(1, SPECIAL),
+                requestedAbsenceStartsIn(datePeriod("2020-09-01", "2020-09-11"))
+        );
         //when
         Executable code = () -> request(datePeriod("2020-09-23", "2020-09-23"), SPECIAL);
         //then
         assertThrows(RequestRejected.class, code);
     }
 
+    private Consumer<Employee> requestedAbsenceStartsIn(DatePeriod period) {
+        return e -> e.addPolicy(absenceStartsIn(period));
+    }
+
     private DatePeriod datePeriod(String start, String end) {
         return new DatePeriod(LocalDate.parse(start, DateTimeFormatter.ISO_LOCAL_DATE), LocalDate.parse(end, DateTimeFormatter.ISO_LOCAL_DATE));
     }
 
-    private void employee(Consumer<Employee> configureHandle) {
+    private void employee(Consumer<Employee>... configureHandles) {
         this.employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        configureHandle.accept(employee);
+        employee.addPolicy(ALLOWANCE_HARD_LIMIT);
+        for (Consumer<Employee> configure : configureHandles) {
+            configure.accept(employee);
+        }
     }
 
     private Consumer<Employee> hasLimitedHolidayDays(int days) {

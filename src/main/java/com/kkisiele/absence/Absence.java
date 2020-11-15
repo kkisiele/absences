@@ -1,5 +1,7 @@
 package com.kkisiele.absence;
 
+import com.kkisiele.absence.policy.AbsencePolicy;
+
 import java.util.UUID;
 
 public class Absence {
@@ -14,13 +16,18 @@ public class Absence {
         this.id = id;
     }
 
-    public void request(RequestAbsence command, AbsenceWorkflow workflow, Allowance allowance, Calendar calendar) {
+    public void request(RequestAbsence command, AbsenceWorkflow workflow, Allowance allowance, Calendar calendar, AbsencePolicy policy) {
         int requestedDays = command.period().numberOfWorkingDays(calendar);
+
+        if (!policy.canRequest(command, requestedDays, allowance)) {
+            throw new RequestRejected();
+        }
+
         if (command.type().deductible()) {
-            if (!allowance.hasEnoughDays(requestedDays)) {
-                throw new RequestRejected();
-            }
-            allowance.request(requestedDays);
+//            if (!allowance.hasEnoughDays(requestedDays)) {
+//                throw new RequestRejected();
+//            }
+            allowance.decreaseBy(requestedDays);
         }
         this.period = command.period();
         this.type = command.type();
@@ -30,7 +37,10 @@ public class Absence {
     }
 
     public void cancel() {
-        allowance.cancel(deducedDays);
+        if (state == AbsenceState.CANCELLED) {
+            throw new IllegalStateException("Cannot cancel already cancelled absence");
+        }
+        allowance.increaseBy(deducedDays);
     }
 
     public UUID id() {
