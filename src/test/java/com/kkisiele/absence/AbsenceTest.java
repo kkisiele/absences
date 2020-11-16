@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class AbsenceTest {
     private final Clock clock = fixedClock(2020, 11, 11);
     private Employee employee;
-    private Allowance allowance;
+    private LimitedAllowance allowance;
     private List<AbsenceRequestPolicy> requestPolicies = new LinkedList<>();
 
     @Test
@@ -137,7 +137,7 @@ public class AbsenceTest {
 
     private Consumer<Employee> hasDeductibleDays(int days, AbsenceType type) {
         return e -> {
-            allowance = new Allowance(days);
+            allowance = new LimitedAllowance(days);
             e.register(type, allowance);
         };
     }

@@ -26,9 +26,7 @@ public class Absence {
             throw new RequestRejected();
         }
 
-        if (command.type().deductible()) {
-            allowance.decreaseBy(requestedDays);
-        }
+        allowance.decreaseBy(requestedDays);
         this.period = command.period();
         this.type = command.type();
         this.state = workflow.initialState();

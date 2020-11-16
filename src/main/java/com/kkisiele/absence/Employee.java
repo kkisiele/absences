@@ -19,7 +19,7 @@ public class Employee {
         this.clock = clock;
     }
 
-    public void register(AbsenceType type, Allowance allowance) {
+    public void register(AbsenceType type, LimitedAllowance allowance) {
         allowances.put(type, allowance);
     }
 
@@ -28,8 +28,12 @@ public class Employee {
             return;
         }
         var absence = new Absence(UUID.randomUUID());
-        absence.request(command, command.type().workflow(), allowances.get(command.type()), calendar, requestPolicy);
+        absence.request(command, command.type().workflow(), allowance(command), calendar, requestPolicy);
         absences.put(absence.id(), absence);
+    }
+
+    private Allowance allowance(RequestAbsence command) {
+        return allowances.getOrDefault(command.type(), Allowance.UNLIMITED);
     }
 
     public void cancel(UUID absenceId) {
