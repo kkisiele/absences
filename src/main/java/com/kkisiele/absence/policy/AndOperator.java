@@ -1,8 +1,5 @@
 package com.kkisiele.absence.policy;
 
-import com.kkisiele.absence.Allowance;
-import com.kkisiele.absence.RequestAbsence;
-
 import java.util.List;
 
 class AndOperator implements AbsenceRequestPolicy {
@@ -13,9 +10,9 @@ class AndOperator implements AbsenceRequestPolicy {
     }
 
     @Override
-    public boolean satisfiedBy(RequestAbsence command, int requestedDays, Allowance allowance) {
+    public boolean satisfiedBy(RequestedAbsence absence) {
         for (AbsenceRequestPolicy policy : policies) {
-            boolean success = policy.satisfiedBy(command, requestedDays, allowance);
+            boolean success = policy.satisfiedBy(absence);
             if (!success) {
                 return false;
             }

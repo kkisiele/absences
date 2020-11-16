@@ -1,6 +1,7 @@
 package com.kkisiele.absence;
 
 import com.kkisiele.absence.policy.AbsenceRequestPolicy;
+import com.kkisiele.absence.policy.RequestedAbsence;
 
 import java.util.UUID;
 
@@ -21,7 +22,7 @@ public class Absence {
     public void request(RequestAbsence command, AbsenceWorkflow workflow, Allowance allowance, Calendar calendar, AbsenceRequestPolicy policy) {
         int requestedDays = command.period().numberOfWorkingDays(calendar);
 
-        if (!policy.satisfiedBy(command, requestedDays, allowance)) {
+        if (!policy.satisfiedBy(new RequestedAbsence(command.period(), command.type(), requestedDays, allowance))) {
             throw new RequestRejected();
         }
 
