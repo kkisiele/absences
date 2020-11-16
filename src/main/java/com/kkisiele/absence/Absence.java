@@ -4,6 +4,8 @@ import com.kkisiele.absence.policy.AbsenceRequestPolicy;
 
 import java.util.UUID;
 
+import static com.kkisiele.absence.AbsenceState.CANCELLED;
+
 public class Absence {
     private final UUID id;
     private DatePeriod period;
@@ -19,7 +21,7 @@ public class Absence {
     public void request(RequestAbsence command, AbsenceWorkflow workflow, Allowance allowance, Calendar calendar, AbsenceRequestPolicy policy) {
         int requestedDays = command.period().numberOfWorkingDays(calendar);
 
-        if (!policy.canRequest(command, requestedDays, allowance)) {
+        if (!policy.satisfiedBy(command, requestedDays, allowance)) {
             throw new RequestRejected();
         }
 
@@ -34,10 +36,11 @@ public class Absence {
     }
 
     public void cancel() {
-        if (state == AbsenceState.CANCELLED) {
+        if (state == CANCELLED) {
             throw new IllegalStateException("Cannot cancel already cancelled absence");
         }
         allowance.increaseBy(deducedDays);
+        state = CANCELLED;
     }
 
     public UUID id() {

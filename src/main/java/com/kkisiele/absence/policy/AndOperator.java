@@ -13,9 +13,9 @@ class AndOperator implements AbsenceRequestPolicy {
     }
 
     @Override
-    public boolean canRequest(RequestAbsence command, int requestedDays, Allowance allowance) {
+    public boolean satisfiedBy(RequestAbsence command, int requestedDays, Allowance allowance) {
         for (AbsenceRequestPolicy policy : policies) {
-            boolean success = policy.canRequest(command, requestedDays, allowance);
+            boolean success = policy.satisfiedBy(command, requestedDays, allowance);
             if (!success) {
                 return false;
             }

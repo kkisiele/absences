@@ -12,7 +12,7 @@ class AbsenceStartsInPeriod implements AbsenceRequestPolicy {
     }
 
     @Override
-    public boolean canRequest(RequestAbsence command, int requestedDays, Allowance allowance) {
+    public boolean satisfiedBy(RequestAbsence command, int requestedDays, Allowance allowance) {
         return period.contains(command.period().start());
     }
 }

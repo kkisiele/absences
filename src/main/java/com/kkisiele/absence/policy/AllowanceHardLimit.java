@@ -5,7 +5,7 @@ import com.kkisiele.absence.RequestAbsence;
 
 class AllowanceHardLimit implements AbsenceRequestPolicy {
     @Override
-    public boolean canRequest(RequestAbsence command, int requestedDays, Allowance allowance) {
+    public boolean satisfiedBy(RequestAbsence command, int requestedDays, Allowance allowance) {
         if (command.type().deductible()) {
             return allowance.hasEnoughDays(requestedDays);
         }

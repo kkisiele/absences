@@ -5,7 +5,7 @@ import com.kkisiele.absence.RequestAbsence;
 
 class AlwaysAllowed implements AbsenceRequestPolicy {
     @Override
-    public boolean canRequest(RequestAbsence command, int requestedDays, Allowance allowance) {
+    public boolean satisfiedBy(RequestAbsence command, int requestedDays, Allowance allowance) {
         return true;
     }
 }
