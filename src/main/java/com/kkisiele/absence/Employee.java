@@ -3,12 +3,15 @@ package com.kkisiele.absence;
 import com.kkisiele.absence.policy.AbsenceRequestPolicy;
 
 import java.time.Clock;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class Employee {
     private final Calendar calendar;
     private final Clock clock;
-    private final List<Absence> absences = new LinkedList<>();
+    private final Map<UUID, Absence> absences = new HashMap<>();
     private Map<AbsenceType, Allowance> allowances = new HashMap<>();
 
     public Employee(Calendar calendar, Clock clock) {
@@ -26,20 +29,19 @@ public class Employee {
         }
         var absence = new Absence(UUID.randomUUID());
         absence.request(command, command.type().workflow(), allowances.get(command.type()), calendar, requestPolicy);
-        absences.add(absence);
+        absences.put(absence.id(), absence);
     }
 
     public void cancel(UUID absenceId) {
-        Absence absence = absences.stream().filter(a -> a.id().equals(absenceId)).findAny().get();
-        absence.cancel();
-        absences.remove(absence);
+        absences.get(absenceId).cancel();
+        absences.remove(absenceId);
     }
 
     private boolean overlaps(DatePeriod period) {
-        return absences.stream().anyMatch(absence -> absence.overlaps(period));
+        return absences.values().stream().anyMatch(absence -> absence.overlaps(period));
     }
 
     public List<Absence> absences() {
-        return absences;
+        return List.copyOf(absences.values());
     }
 }
