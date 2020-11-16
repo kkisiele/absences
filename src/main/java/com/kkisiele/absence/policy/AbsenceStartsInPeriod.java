@@ -4,7 +4,7 @@ import com.kkisiele.absence.Allowance;
 import com.kkisiele.absence.DatePeriod;
 import com.kkisiele.absence.RequestAbsence;
 
-class AbsenceStartsInPeriod implements AbsencePolicy {
+class AbsenceStartsInPeriod implements AbsenceRequestPolicy {
     private final DatePeriod period;
 
     public AbsenceStartsInPeriod(DatePeriod period) {

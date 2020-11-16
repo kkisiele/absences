@@ -1,11 +1,13 @@
 package com.kkisiele.absence;
 
+import com.kkisiele.absence.policy.AbsenceRequestPolicy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -13,8 +15,7 @@ import static com.kkisiele.absence.AbsenceState.APPROVAL_PENDING;
 import static com.kkisiele.absence.AbsenceState.APPROVED;
 import static com.kkisiele.absence.AbsenceType.*;
 import static com.kkisiele.absence.TestUtils.fixedClock;
-import static com.kkisiele.absence.policy.AbsencePolicies.absenceStartsIn;
-import static com.kkisiele.absence.policy.AbsencePolicies.allowanceHardLimit;
+import static com.kkisiele.absence.policy.AbsencePolicies.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -22,6 +23,7 @@ public class AbsenceTest {
     private final Clock clock = fixedClock(2020, 11, 11);
     private Employee employee;
     private Allowance allowance;
+    private List<AbsenceRequestPolicy> requestPolicies = new LinkedList<>();
 
     @Test
     void requestingSicknessResultsInApprovedAbsence() {
@@ -86,7 +88,7 @@ public class AbsenceTest {
     }
 
     @Test
-    void absenceCanBeRequestedOnlyInGivenPeriod() {
+    void cannotRequestAbsenceOutOfGivenPeriod() {
         //given
         employee(
                 hasDeductibleDays(1, SPECIAL),
@@ -98,8 +100,23 @@ public class AbsenceTest {
         assertThrows(RequestRejected.class, code);
     }
 
+    @Test
+    void absenceCanBeRequestedOnlyInGivenPeriod() {
+        //given
+        employee(
+                hasDeductibleDays(1, SPECIAL),
+                requestedAbsenceStartsIn(datePeriod("2020-09-01", "2020-09-11"))
+        );
+        //when
+        request(datePeriod("2020-09-01", "2020-09-01"), SPECIAL);
+        //then
+        assertNumberOfRemainingDays(0);
+    }
+
     private Consumer<Employee> requestedAbsenceStartsIn(DatePeriod period) {
-        return e -> e.addPolicy(absenceStartsIn(period));
+        requestPolicies.add(absenceStartsIn(period));
+        return e -> {
+        };
     }
 
     private DatePeriod datePeriod(String start, String end) {
@@ -108,7 +125,7 @@ public class AbsenceTest {
 
     private void employee(Consumer<Employee>... configureHandles) {
         this.employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        employee.addPolicy(allowanceHardLimit());
+        requestPolicies.add(allowanceHardLimit());
         for (Consumer<Employee> configure : configureHandles) {
             configure.accept(employee);
         }
@@ -143,7 +160,7 @@ public class AbsenceTest {
     }
 
     private void request(DatePeriod period, AbsenceType type) {
-        employee.request(new RequestAbsence(period, type));
+        employee.request(new RequestAbsence(period, type), requestPolicies.isEmpty() ? allowed() : and(requestPolicies));
     }
 
     private DatePeriod daysToSomePeriod(int days) {

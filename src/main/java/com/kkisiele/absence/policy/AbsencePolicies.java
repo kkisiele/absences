@@ -5,22 +5,22 @@ import com.kkisiele.absence.DatePeriod;
 import java.util.List;
 
 public class AbsencePolicies {
-    private static final AbsencePolicy ALWAYS_ALLOWED = new AlwaysAllowed();
-    private static final AbsencePolicy ALLOWANCE_HARD_LIMIT = new AllowanceHardLimit();
+    private static final AbsenceRequestPolicy ALWAYS_ALLOWED = new AlwaysAllowed();
+    private static final AbsenceRequestPolicy ALLOWANCE_HARD_LIMIT = new AllowanceHardLimit();
 
-    public static AbsencePolicy allowed() {
+    public static AbsenceRequestPolicy allowed() {
         return ALWAYS_ALLOWED;
     }
 
-    public static AbsencePolicy allowanceHardLimit() {
+    public static AbsenceRequestPolicy allowanceHardLimit() {
         return ALLOWANCE_HARD_LIMIT;
     }
 
-    public static AbsencePolicy absenceStartsIn(DatePeriod period) {
+    public static AbsenceRequestPolicy absenceStartsIn(DatePeriod period) {
         return new AbsenceStartsInPeriod(period);
     }
 
-    public static AbsencePolicy and(List<AbsencePolicy> policies) {
+    public static AbsenceRequestPolicy and(List<AbsenceRequestPolicy> policies) {
         return new AndOperator(policies);
     }
 }
