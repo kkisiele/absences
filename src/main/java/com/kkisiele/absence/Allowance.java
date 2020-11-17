@@ -9,16 +9,18 @@ public interface Allowance {
 
         @Override
         public void decreaseBy(int days) {
+            //do nothing
         }
 
         @Override
         public void increaseBy(int days) {
+            //do nothing
         }
     };
 
     boolean hasEnoughDays(int days);
 
-    void decreaseBy(int days);
-
     void increaseBy(int days);
+
+    void decreaseBy(int days);
 }
