@@ -20,7 +20,7 @@ class Absence {
     }
 
     public void request(RequestAbsence command, AbsenceWorkflow workflow, Allowance allowance, Calendar calendar, AbsenceRequestPolicy policy) {
-        int requestedDays = command.period().numberOfWorkingDays(calendar);
+        int requestedDays = calendar.numberOfWorkingDays(command.period());
 
         if (!policy.satisfiedBy(new RequestedAbsence(command.period(), command.type(), requestedDays, allowance))) {
             throw new RequestRejected();
