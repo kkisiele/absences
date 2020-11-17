@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import static com.kkisiele.absence.AbsenceState.CANCELLED;
 
-public class Absence {
+class Absence {
     private final UUID id;
     private DatePeriod period;
     private AbsenceType type;

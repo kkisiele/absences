@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class Employee {
+class Employee {
     private final Calendar calendar;
     private final Clock clock;
     private final Map<UUID, Absence> absences = new HashMap<>();

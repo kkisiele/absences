@@ -1,6 +1,6 @@
 package com.kkisiele.absence;
 
-public class DefaultWorkflow implements AbsenceWorkflow {
+class DefaultWorkflow implements AbsenceWorkflow {
     private AbsenceState initialState;
 
     public DefaultWorkflow(AbsenceState initialState) {
