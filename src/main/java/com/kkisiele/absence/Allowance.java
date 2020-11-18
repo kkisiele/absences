@@ -1,26 +1,25 @@
 package com.kkisiele.absence;
 
-public interface Allowance {
-    Allowance UNLIMITED = new Allowance() {
-        @Override
-        public boolean hasEnoughDays(int days) {
-            return true;
-        }
+public class Allowance {
+    private int remainingDays;
 
-        @Override
-        public void decreaseBy(int days) {
-            //do nothing
-        }
+    public Allowance(String name, int days) {
+        this.remainingDays = days;
+    }
 
-        @Override
-        public void increaseBy(int days) {
-            //do nothing
-        }
-    };
+    public boolean hasEnoughDays(int days) {
+        return remainingDays >= days;
+    }
 
-    boolean hasEnoughDays(int days);
+    public void decreaseBy(int days) {
+        remainingDays -= days;
+    }
 
-    void increaseBy(int days);
+    public void increaseBy(int days) {
+        remainingDays += days;
+    }
 
-    void decreaseBy(int days);
+    public int remainingDays() {
+        return remainingDays;
+    }
 }

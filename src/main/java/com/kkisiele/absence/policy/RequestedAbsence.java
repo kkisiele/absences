@@ -4,17 +4,19 @@ import com.kkisiele.absence.AbsenceType;
 import com.kkisiele.absence.Allowance;
 import com.kkisiele.absence.DatePeriod;
 
+import java.util.List;
+
 public class RequestedAbsence {
     private final DatePeriod period;
     private final AbsenceType type;
     private final int requestedDays;
-    private final Allowance allowance;
+    private final List<Allowance> allowances;
 
-    public RequestedAbsence(DatePeriod period, AbsenceType type, int requestedDays, Allowance allowance) {
+    public RequestedAbsence(DatePeriod period, AbsenceType type, int requestedDays, List<Allowance> allowances) {
         this.period = period;
         this.type = type;
         this.requestedDays = requestedDays;
-        this.allowance = allowance;
+        this.allowances = List.copyOf(allowances);
     }
 
     public DatePeriod period() {
@@ -29,7 +31,7 @@ public class RequestedAbsence {
         return requestedDays;
     }
 
-    public Allowance allowance() {
-        return allowance;
+    public List<Allowance> allowances() {
+        return allowances;
     }
 }

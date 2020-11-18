@@ -7,8 +7,7 @@ import org.junit.jupiter.api.function.Executable;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.kkisiele.absence.AbsenceState.APPROVAL_PENDING;
@@ -22,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class AbsenceTest {
     private final Clock clock = fixedClock(2020, 11, 11);
     private Employee employee;
-    private LimitedAllowance allowance;
+    private Map<String, Allowance> allowances = new HashMap<>();
     private List<AbsenceRequestPolicy> requestPolicies = new LinkedList<>();
 
     @Test
@@ -63,7 +62,7 @@ public class AbsenceTest {
         //when
         requestHolidayDays(3);
         //then
-        assertNumberOfRemainingDays(23);
+        assertNumberOfRemainingDays("holiday", 23);
     }
 
     @Test
@@ -84,14 +83,14 @@ public class AbsenceTest {
         //when
         employee.cancel(absences().get(0).id());
         //then
-        assertNumberOfRemainingDays(26);
+        assertNumberOfRemainingDays("holiday", 26);
     }
 
     @Test
     void cannotRequestAbsenceOutOfGivenPeriod() {
         //given
         employee(
-                hasDeductibleDays(1, SPECIAL),
+                hasDeductibleDays("special", 1, SPECIAL),
                 requestedAbsenceStartsIn(datePeriod("2020-09-01", "2020-09-11"))
         );
         //when
@@ -104,13 +103,40 @@ public class AbsenceTest {
     void absenceCanBeRequestedOnlyInGivenPeriod() {
         //given
         employee(
-                hasDeductibleDays(1, SPECIAL),
+                hasDeductibleDays("special", 1, SPECIAL),
                 requestedAbsenceStartsIn(datePeriod("2020-09-01", "2020-09-11"))
         );
         //when
         request(datePeriod("2020-09-01", "2020-09-01"), SPECIAL);
         //then
-        assertNumberOfRemainingDays(0);
+        assertNumberOfRemainingDays("special", 0);
+    }
+
+    @Test
+    void onDemandAbsenceDeducesFromBothOnDemandAndHolidayAllowances() {
+        //given
+        employee(
+                hasDeductibleDays("on-demand", 4, ON_DEMAND),
+                hasDeductibleDays("holiday", 26, HOLIDAY, ON_DEMAND)
+        );
+        //when
+        request(datePeriod("2020-09-01", "2020-09-01"), ON_DEMAND);
+        //then
+        assertNumberOfRemainingDays("on-demand", 3);
+        assertNumberOfRemainingDays("holiday", 25);
+    }
+
+    @Test
+    void cannotRequestMoreOnDemandAbsencesThanAvailable() {
+        //given
+        employee(
+                hasDeductibleDays("on-demand", 0, ON_DEMAND),
+                hasDeductibleDays("holiday", 20, HOLIDAY, ON_DEMAND)
+        );
+        //when
+        Executable code = () -> request(datePeriod("2020-09-01", "2020-09-01"), ON_DEMAND);
+        //then
+        assertThrows(RequestRejected.class, code);
     }
 
     private Consumer<Employee> requestedAbsenceStartsIn(DatePeriod period) {
@@ -132,13 +158,14 @@ public class AbsenceTest {
     }
 
     private Consumer<Employee> hasLimitedHolidayDays(int days) {
-        return hasDeductibleDays(days, HOLIDAY);
+        return hasDeductibleDays("holiday", days, HOLIDAY);
     }
 
-    private Consumer<Employee> hasDeductibleDays(int days, AbsenceType type) {
+    private Consumer<Employee> hasDeductibleDays(String name, int days, AbsenceType... types) {
         return e -> {
-            allowance = new LimitedAllowance(days);
-            e.register(type, allowance);
+            Allowance allowance = new Allowance(name, days);
+            Arrays.asList(types).forEach(t -> e.register(t, allowance));
+            allowances.put(name, allowance);
         };
     }
 
@@ -181,7 +208,7 @@ public class AbsenceTest {
         return employee.absences();
     }
 
-    private void assertNumberOfRemainingDays(int days) {
-        assertEquals(days, allowance.remainingDays());
+    private void assertNumberOfRemainingDays(String name, int days) {
+        assertEquals(days, allowances.get(name).remainingDays());
     }
 }

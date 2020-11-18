@@ -3,24 +3,21 @@ package com.kkisiele.absence;
 import com.kkisiele.absence.policy.AbsenceRequestPolicy;
 
 import java.time.Clock;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 class Employee {
     private final Calendar calendar;
     private final Clock clock;
     private final Map<UUID, Absence> absences = new HashMap<>();
-    private Map<AbsenceType, Allowance> allowances = new HashMap<>();
+    private Map<AbsenceType, List<Allowance>> allowances = new HashMap<>();
 
     public Employee(Calendar calendar, Clock clock) {
         this.calendar = calendar;
         this.clock = clock;
     }
 
-    public void register(AbsenceType type, LimitedAllowance allowance) {
-        allowances.put(type, allowance);
+    public void register(AbsenceType type, Allowance allowance) {
+        allowances.computeIfAbsent(type, t -> new ArrayList<>()).add(allowance);
     }
 
     public void request(RequestAbsence command, AbsenceRequestPolicy requestPolicy) {
@@ -28,12 +25,12 @@ class Employee {
             return;
         }
         var absence = new Absence(UUID.randomUUID());
-        absence.request(command, command.type().workflow(), allowance(command), calendar, requestPolicy);
+        absence.request(command, command.type().workflow(), allowances(command), calendar, requestPolicy);
         absences.put(absence.id(), absence);
     }
 
-    private Allowance allowance(RequestAbsence command) {
-        return allowances.getOrDefault(command.type(), Allowance.UNLIMITED);
+    private List<Allowance> allowances(RequestAbsence command) {
+        return allowances.getOrDefault(command.type(), Collections.emptyList());
     }
 
     public void cancel(UUID absenceId) {
