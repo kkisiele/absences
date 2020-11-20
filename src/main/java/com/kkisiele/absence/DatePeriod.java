@@ -38,10 +38,8 @@ public final class DatePeriod implements Iterable<LocalDate> {
 
     private List<LocalDate> days() {
         List<LocalDate> result = new ArrayList<>();
-        LocalDate day = start;
-        while (day.compareTo(end) <= 0) {
+        for (LocalDate day = start; day.compareTo(end) <= 0; day = day.plusDays(1)) {
             result.add(day);
-            day = day.plusDays(1);
         }
         return result;
     }
