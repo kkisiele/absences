@@ -38,7 +38,7 @@ public class EmployeeAssert {
     }
 
     public EmployeeAssert doesNotHaveAbsenceRequested() {
-        assertTrue(thrownException().getClass() == RequestRejected.class);
+        assertTrue(thrownException().getClass() == AbsenceRejected.class);
         return this;
     }
 

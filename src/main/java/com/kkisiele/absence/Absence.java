@@ -24,7 +24,7 @@ class Absence {
         int requestedDays = calendar.numberOfWorkingDays(command.period());
 
         if (!policy.satisfiedBy(new RequestedAbsence(command.period(), command.type(), requestedDays, allowances))) {
-            throw new RequestRejected();
+            throw new AbsenceRejected();
         }
 
         allowances.forEach(a -> a.decreaseBy(requestedDays));

@@ -24,13 +24,13 @@ public class EmployeeBuilder {
         return this;
     }
 
+    public EmployeeBuilder havingUnlimitedDays() {
+        return havingDeductibleDays(Integer.MAX_VALUE);
+    }
+
     public EmployeeBuilder handledBy(AbsenceType... types) {
         Arrays.asList(types).forEach(type -> employee.register(type, allowance));
         return this;
-    }
-
-    public Employee build() {
-        return employee;
     }
 
     public EmployeeBuilder havingAbsence(DatePeriod period, AbsenceType type, AbsenceState state) {
@@ -44,5 +44,9 @@ public class EmployeeBuilder {
     public EmployeeBuilder havingAbsence(UUID id, DatePeriod period, AbsenceType type, AbsenceState state) {
         employee.request(new RequestAbsence(id, period, type), new DefaultWorkflow(state), allowed());
         return this;
+    }
+
+    public Employee build() {
+        return employee;
     }
 }

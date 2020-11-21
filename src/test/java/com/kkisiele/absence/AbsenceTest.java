@@ -20,13 +20,24 @@ public class AbsenceTest {
     private static final AbsenceRequestPolicy REQUEST_POLICY_WHEN_NONE_PROVIDED = allowanceHardLimit();
     private static final Clock CLOCK = fixedClock(2020, 11, 11);
 
-    private EmployeeBuilder employeeBuilder;
+    private EmployeeBuilder builder;
     private List<AbsenceRequestPolicy> requestPolicies = new LinkedList<>();
     private EmployeeResult result;
 
     @Test
-    void requestingSicknessResultsInApprovedAbsence() {
+    void cannotRequestNotHandledAbsenceType() {
         givenEmployee();
+
+        whenRequestAbsence(days(3), SICKNESS);
+
+        thenEmployee()
+                .doesNotHaveAbsenceRequested();
+    }
+
+    @Test
+    void requestingSicknessResultsInApprovedAbsence() {
+        givenEmployee()
+                .havingUnlimitedDays().handledBy(SICKNESS);
 
         whenRequestAbsence(days(3), SICKNESS);
 
@@ -49,6 +60,7 @@ public class AbsenceTest {
     void cannotRequestWhenPeriodOverlapsAnyOfExistingAbsences() {
         givenEmployee()
                 .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
+                .havingUnlimitedDays().handledBy(SICKNESS)
                 .havingAbsence(period("2020-09-01", "2020-09-05"), SICKNESS, APPROVED);
 
         whenRequestAbsence(period("2020-09-05", "2020-09-10"), HOLIDAY);
@@ -142,8 +154,8 @@ public class AbsenceTest {
     }
 
     private EmployeeBuilder givenEmployee() {
-        this.employeeBuilder = new EmployeeBuilder(CLOCK);
-        return this.employeeBuilder;
+        this.builder = new EmployeeBuilder(CLOCK);
+        return this.builder;
     }
 
     private void givenRequestPolicy(AbsenceRequestPolicy requestPolicy) {
@@ -166,7 +178,7 @@ public class AbsenceTest {
     }
 
     private void onEmployee(Consumer<Employee> callback) {
-        Employee employee = employeeBuilder.build();
+        Employee employee = builder.build();
         try {
             callback.accept(employee);
             result = new EmployeeResult(employee);

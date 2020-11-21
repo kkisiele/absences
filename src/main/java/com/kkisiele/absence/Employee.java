@@ -22,15 +22,14 @@ class Employee {
 
     public void request(RequestAbsence command, AbsenceWorkflow workflow, AbsenceRequestPolicy requestPolicy) {
         if (overlaps(command.period())) {
-            return;
+            throw new AbsenceRejected();
+        }
+        if (!allowances.containsKey(command.type())) {
+            throw new AbsenceRejected();
         }
         var absence = new Absence(command.id());
-        absence.request(command, workflow, allowances(command), calendar, requestPolicy);
+        absence.request(command, workflow, allowances.get(command.type()), calendar, requestPolicy);
         absences.put(absence.id(), absence);
-    }
-
-    private List<Allowance> allowances(RequestAbsence command) {
-        return allowances.getOrDefault(command.type(), Collections.emptyList());
     }
 
     public void cancel(UUID absenceId) {
