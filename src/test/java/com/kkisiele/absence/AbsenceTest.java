@@ -2,213 +2,184 @@ package com.kkisiele.absence;
 
 import com.kkisiele.absence.policy.AbsenceRequestPolicy;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 
 import java.time.Clock;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static com.kkisiele.absence.AbsenceState.APPROVAL_PENDING;
 import static com.kkisiele.absence.AbsenceState.APPROVED;
 import static com.kkisiele.absence.AbsenceType.*;
-import static com.kkisiele.absence.TestUtils.fixedClock;
+import static com.kkisiele.absence.EmployeeAssert.EmployeeResult;
+import static com.kkisiele.absence.TestFixture.*;
 import static com.kkisiele.absence.policy.AbsencePolicies.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AbsenceTest {
-    private final Clock clock = fixedClock(2020, 11, 11);
-    private Employee employee;
-    private Map<String, Allowance> allowances = new HashMap<>();
+    private static final AbsenceRequestPolicy REQUEST_POLICY_WHEN_NONE_PROVIDED = allowanceHardLimit();
+    private static final Clock CLOCK = fixedClock(2020, 11, 11);
+
+    private EmployeeBuilder employeeBuilder;
     private List<AbsenceRequestPolicy> requestPolicies = new LinkedList<>();
+    private EmployeeResult result;
 
     @Test
     void requestingSicknessResultsInApprovedAbsence() {
-        //given
-        employee(hasUnlimitedSicknessDays());
-        //when
-        requestSicknessDays(3);
-        //then
-        assertAbsenceRequestedInState(APPROVED);
+        givenEmployee();
+
+        whenRequestAbsence(days(3), SICKNESS);
+
+        thenEmployee()
+                .hasAbsenceRequestedInState(APPROVED);
     }
 
     @Test
     void requestingHolidayByEmployeeResultsInApprovalPendingAbsence() {
-        //given
-        employee(hasLimitedHolidayDays(26));
-        //when
-        requestHolidayDays(3);
-        //then
-        assertAbsenceRequestedInState(APPROVAL_PENDING);
+        givenEmployee()
+                .havingDeductibleDays(26).handledBy(HOLIDAY);
+
+        whenRequestAbsence(days(3), HOLIDAY);
+
+        thenEmployee()
+                .hasAbsenceRequestedInState(APPROVAL_PENDING);
     }
 
     @Test
     void cannotRequestWhenPeriodOverlapsAnyOfExistingAbsences() {
-        //given
-        employee(hasLimitedHolidayDays(26));
-        requestSicknessDays(3);
-        //when
-        requestHolidayDays(3);
-        //then
-        assertNumberOfRequestedAbsences(1);
+        givenEmployee()
+                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
+                .havingAbsence(period("2020-09-01", "2020-09-05"), SICKNESS, APPROVED);
+
+        whenRequestAbsence(period("2020-09-05", "2020-09-10"), HOLIDAY);
+
+        thenEmployee()
+                .hasGivenNumberOfRequestedAbsences(1)
+                .hasGivenNumberOfRemainingDays("holiday", 26);
     }
 
     @Test
     void requestingHolidayDeducesRemainingDays() {
-        //given
-        employee(hasLimitedHolidayDays(26));
-        //when
-        requestHolidayDays(3);
-        //then
-        assertNumberOfRemainingDays("holiday", 23);
+        givenEmployee()
+                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY);
+
+        whenRequestAbsence(days(3), HOLIDAY);
+
+        thenEmployee()
+                .hasGivenNumberOfRemainingDays("holiday", 23);
     }
 
     @Test
     void cannotRequestMoreDaysThanAvailable() {
-        //given
-        employee(hasLimitedHolidayDays(2));
-        //when
-        Executable code = () -> requestHolidayDays(3);
-        //then
-        assertThrows(RequestRejected.class, code);
+        givenEmployee()
+                .havingDeductibleDays("holiday", 2).handledBy(HOLIDAY);
+
+        whenRequestAbsence(days(3), HOLIDAY);
+
+        thenEmployee()
+                .doesNotHaveAbsenceRequested();
     }
 
     @Test
     void cancellingAbsenceRefundRequestedDays() {
-        //given
-        employee(hasLimitedHolidayDays(26));
-        requestHolidayDays(3);
-        //when
-        employee.cancel(absences().get(0).id());
-        //then
-        assertNumberOfRemainingDays("holiday", 26);
+        givenEmployee()
+                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
+                .havingAbsence("id-1", days(3), HOLIDAY, APPROVED);
+
+        whenCancelAbsence("id-1");
+
+        thenEmployee()
+                .hasGivenNumberOfRemainingDays("holiday", 26);
     }
 
     @Test
     void cannotRequestAbsenceOutOfGivenPeriod() {
-        //given
-        employee(
-                hasDeductibleDays("special", 1, SPECIAL),
-                requestedAbsenceStartsIn(datePeriod("2020-09-01", "2020-09-11"))
-        );
-        //when
-        Executable code = () -> request(datePeriod("2020-09-23", "2020-09-23"), SPECIAL);
-        //then
-        assertThrows(RequestRejected.class, code);
+        givenEmployee()
+                .havingDeductibleDays("special", 1).handledBy(SPECIAL);
+        givenRequestPolicy(absenceStartsIn(period("2020-09-01", "2020-09-11")));
+
+        whenRequestAbsence(period("2020-09-23", "2020-09-23"), SPECIAL);
+
+        thenEmployee()
+                .doesNotHaveAbsenceRequested();
     }
 
     @Test
     void absenceCanBeRequestedOnlyInGivenPeriod() {
-        //given
-        employee(
-                hasDeductibleDays("special", 1, SPECIAL),
-                requestedAbsenceStartsIn(datePeriod("2020-09-01", "2020-09-11"))
-        );
-        //when
-        request(datePeriod("2020-09-01", "2020-09-01"), SPECIAL);
-        //then
-        assertNumberOfRemainingDays("special", 0);
+        givenEmployee()
+                .havingDeductibleDays("special", 1).handledBy(SPECIAL);
+        givenRequestPolicy(absenceStartsIn(period("2020-09-01", "2020-09-11")));
+
+        whenRequestAbsence(period("2020-09-01"), SPECIAL);
+
+        thenEmployee()
+                .hasGivenNumberOfRemainingDays("special", 0);
     }
 
     @Test
     void onDemandAbsenceDeducesFromBothOnDemandAndHolidayAllowances() {
-        //given
-        employee(
-                hasDeductibleDays("on-demand", 4, ON_DEMAND),
-                hasDeductibleDays("holiday", 26, HOLIDAY, ON_DEMAND)
-        );
-        //when
-        request(datePeriod("2020-09-01", "2020-09-01"), ON_DEMAND);
-        //then
-        assertNumberOfRemainingDays("on-demand", 3);
-        assertNumberOfRemainingDays("holiday", 25);
+        givenEmployee()
+                .havingDeductibleDays("on-demand", 4).handledBy(ON_DEMAND)
+                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY, ON_DEMAND);
+
+        whenRequestAbsence(period("2020-09-01"), ON_DEMAND);
+
+        thenEmployee()
+                .hasGivenNumberOfRemainingDays("on-demand", 3)
+                .hasGivenNumberOfRemainingDays("holiday", 25);
     }
 
     @Test
     void cannotRequestMoreOnDemandAbsencesThanAvailable() {
-        //given
-        employee(
-                hasDeductibleDays("on-demand", 0, ON_DEMAND),
-                hasDeductibleDays("holiday", 20, HOLIDAY, ON_DEMAND)
-        );
-        //when
-        Executable code = () -> request(datePeriod("2020-09-01", "2020-09-01"), ON_DEMAND);
-        //then
-        assertThrows(RequestRejected.class, code);
+        givenEmployee()
+                .havingDeductibleDays("on-demand", 0).handledBy(ON_DEMAND)
+                .havingDeductibleDays("holiday", 20).handledBy(HOLIDAY, ON_DEMAND);
+
+        whenRequestAbsence(period("2020-09-01"), ON_DEMAND);
+
+        thenEmployee()
+                .doesNotHaveAbsenceRequested();
     }
 
-    private Consumer<Employee> requestedAbsenceStartsIn(DatePeriod period) {
-        requestPolicies.add(absenceStartsIn(period));
-        return e -> {
-        };
+    private EmployeeBuilder givenEmployee() {
+        this.employeeBuilder = new EmployeeBuilder(CLOCK);
+        return this.employeeBuilder;
     }
 
-    private DatePeriod datePeriod(String start, String end) {
-        return new DatePeriod(LocalDate.parse(start, DateTimeFormatter.ISO_LOCAL_DATE), LocalDate.parse(end, DateTimeFormatter.ISO_LOCAL_DATE));
+    private void givenRequestPolicy(AbsenceRequestPolicy requestPolicy) {
+        this.requestPolicies.add(requestPolicy);
     }
 
-    private void employee(Consumer<Employee>... configureHandles) {
-        this.employee = new Employee(new AllWorkingDaysCalendar(), clock);
-        requestPolicies.add(allowanceHardLimit());
-        for (Consumer<Employee> configure : configureHandles) {
-            configure.accept(employee);
+    private void whenRequestAbsence(DatePeriod period, AbsenceType type) {
+        whenRequestAbsence(UUID.randomUUID(), period, type);
+    }
+
+    private void whenRequestAbsence(UUID id, DatePeriod period, AbsenceType type) {
+        onEmployee(e -> {
+            AbsenceRequestPolicy requestPolicy = requestPolicies.isEmpty() ? REQUEST_POLICY_WHEN_NONE_PROVIDED : and(requestPolicies);
+            e.request(new RequestAbsence(id, period, type), type.workflow(), requestPolicy);
+        });
+    }
+
+    private void whenCancelAbsence(String id) {
+        onEmployee(e -> e.cancel(uuid(id)));
+    }
+
+    private void onEmployee(Consumer<Employee> callback) {
+        Employee employee = employeeBuilder.build();
+        try {
+            callback.accept(employee);
+            result = new EmployeeResult(employee);
+        } catch (Exception ex) {
+            result = new EmployeeResult(employee, ex);
         }
     }
 
-    private Consumer<Employee> hasLimitedHolidayDays(int days) {
-        return hasDeductibleDays("holiday", days, HOLIDAY);
+    private EmployeeAssert thenEmployee() {
+        return new EmployeeAssert(result);
     }
 
-    private Consumer<Employee> hasDeductibleDays(String name, int days, AbsenceType... types) {
-        return e -> {
-            Allowance allowance = new Allowance(name, days);
-            Arrays.asList(types).forEach(t -> e.register(t, allowance));
-            allowances.put(name, allowance);
-        };
-    }
-
-    private Consumer<Employee> hasUnlimitedSicknessDays() {
-        return e -> {
-        };
-    }
-
-    private void requestHolidayDays(int days) {
-        request(days, HOLIDAY);
-    }
-
-    private void requestSicknessDays(int days) {
-        request(days, SICKNESS);
-    }
-
-    private void request(int days, AbsenceType type) {
-        request(daysToSomePeriod(days), type);
-    }
-
-    private void request(DatePeriod period, AbsenceType type) {
-        employee.request(new RequestAbsence(period, type), requestPolicies.isEmpty() ? allowed() : and(requestPolicies));
-    }
-
-    private DatePeriod daysToSomePeriod(int days) {
-        final LocalDate now = LocalDate.now(clock);
-        return new DatePeriod(now, now.plusDays(days - 1));
-    }
-
-    private void assertAbsenceRequestedInState(AbsenceState state) {
-        assertNumberOfRequestedAbsences(1);
-        assertEquals(state, absences().get(0).state());
-    }
-
-    private void assertNumberOfRequestedAbsences(int count) {
-        assertEquals(count, absences().size());
-    }
-
-    private List<Absence> absences() {
-        return employee.absences();
-    }
-
-    private void assertNumberOfRemainingDays(String name, int days) {
-        assertEquals(days, allowances.get(name).remainingDays());
+    private DatePeriod days(int days) {
+        return daysToPeriod(days, CLOCK);
     }
 }

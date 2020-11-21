@@ -20,12 +20,12 @@ class Employee {
         allowances.computeIfAbsent(type, t -> new ArrayList<>()).add(allowance);
     }
 
-    public void request(RequestAbsence command, AbsenceRequestPolicy requestPolicy) {
+    public void request(RequestAbsence command, AbsenceWorkflow workflow, AbsenceRequestPolicy requestPolicy) {
         if (overlaps(command.period())) {
             return;
         }
-        var absence = new Absence(UUID.randomUUID());
-        absence.request(command, command.type().workflow(), allowances(command), calendar, requestPolicy);
+        var absence = new Absence(command.id());
+        absence.request(command, workflow, allowances(command), calendar, requestPolicy);
         absences.put(absence.id(), absence);
     }
 
@@ -44,5 +44,13 @@ class Employee {
 
     public List<Absence> absences() {
         return List.copyOf(absences.values());
+    }
+
+    public int remainingDays(String name) {
+        return allowances.values().stream()
+                         .flatMap(List::stream)
+                         .filter(allowance -> allowance.name().equals(name))
+                         .findFirst().get()
+                         .remainingDays();
     }
 }
