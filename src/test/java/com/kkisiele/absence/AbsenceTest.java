@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static com.kkisiele.absence.AbsenceRejectionReason.*;
 import static com.kkisiele.absence.AbsenceState.APPROVAL_PENDING;
 import static com.kkisiele.absence.AbsenceState.APPROVED;
 import static com.kkisiele.absence.AbsenceType.*;
@@ -31,7 +32,7 @@ public class AbsenceTest {
         whenRequestAbsence(days(3), SICKNESS);
 
         thenEmployee()
-                .doesNotHaveAbsenceRequested();
+                .failedToRequestAbsenceBecauseOf(ABSENCE_TYPE_NOT_SUPPORTED);
     }
 
     @Test
@@ -66,6 +67,7 @@ public class AbsenceTest {
         whenRequestAbsence(period("2020-09-05", "2020-09-10"), HOLIDAY);
 
         thenEmployee()
+                .failedToRequestAbsenceBecauseOf(OVERLAPS_EXISTING_ABSENCE)
                 .hasGivenNumberOfRequestedAbsences(1)
                 .hasGivenNumberOfRemainingDays("holiday", 26);
     }
@@ -89,7 +91,7 @@ public class AbsenceTest {
         whenRequestAbsence(days(3), HOLIDAY);
 
         thenEmployee()
-                .doesNotHaveAbsenceRequested();
+                .failedToRequestAbsenceBecauseOf(NOT_ENOUGH_DAYS_AVAILABLE);
     }
 
     @Test
@@ -113,7 +115,7 @@ public class AbsenceTest {
         whenRequestAbsence(period("2020-09-23", "2020-09-23"), SPECIAL);
 
         thenEmployee()
-                .doesNotHaveAbsenceRequested();
+                .failedToRequestAbsenceBecauseOf(NOT_START_IN_VALID_PERIOD);
     }
 
     @Test
@@ -150,7 +152,7 @@ public class AbsenceTest {
         whenRequestAbsence(period("2020-09-01"), ON_DEMAND);
 
         thenEmployee()
-                .doesNotHaveAbsenceRequested();
+                .failedToRequestAbsenceBecauseOf(NOT_ENOUGH_DAYS_AVAILABLE);
     }
 
     private EmployeeBuilder givenEmployee() {

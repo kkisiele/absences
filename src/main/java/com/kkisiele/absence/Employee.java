@@ -5,6 +5,9 @@ import com.kkisiele.absence.policy.AbsenceRequestPolicy;
 import java.time.Clock;
 import java.util.*;
 
+import static com.kkisiele.absence.AbsenceRejectionReason.ABSENCE_TYPE_NOT_SUPPORTED;
+import static com.kkisiele.absence.AbsenceRejectionReason.OVERLAPS_EXISTING_ABSENCE;
+
 class Employee {
     private final Calendar calendar;
     private final Clock clock;
@@ -22,10 +25,10 @@ class Employee {
 
     public void request(RequestAbsence command, AbsenceWorkflow workflow, AbsenceRequestPolicy requestPolicy) {
         if (overlaps(command.period())) {
-            throw new AbsenceRejected();
+            throw new AbsenceRejected(OVERLAPS_EXISTING_ABSENCE);
         }
         if (!allowances.containsKey(command.type())) {
-            throw new AbsenceRejected();
+            throw new AbsenceRejected(ABSENCE_TYPE_NOT_SUPPORTED);
         }
         var absence = new Absence(command.id());
         absence.request(command, workflow, allowances.get(command.type()), calendar, requestPolicy);

@@ -2,6 +2,8 @@ package com.kkisiele.absence.policy;
 
 import java.util.List;
 
+import static com.kkisiele.absence.policy.AbsenceRequestResult.succeed;
+
 class AndOperator implements AbsenceRequestPolicy {
     private final List<AbsenceRequestPolicy> policies;
 
@@ -10,13 +12,13 @@ class AndOperator implements AbsenceRequestPolicy {
     }
 
     @Override
-    public boolean satisfiedBy(RequestedAbsence absence) {
+    public AbsenceRequestResult satisfiedBy(RequestedAbsence absence) {
         for (AbsenceRequestPolicy policy : policies) {
-            boolean success = policy.satisfiedBy(absence);
-            if (!success) {
-                return false;
+            AbsenceRequestResult result = policy.satisfiedBy(absence);
+            if (result.failed()) {
+                return result;
             }
         }
-        return true;
+        return succeed();
     }
 }

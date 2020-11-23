@@ -1,6 +1,7 @@
 package com.kkisiele.absence;
 
 import com.kkisiele.absence.policy.AbsenceRequestPolicy;
+import com.kkisiele.absence.policy.AbsenceRequestResult;
 import com.kkisiele.absence.policy.RequestedAbsence;
 
 import java.util.List;
@@ -23,8 +24,9 @@ class Absence {
     public void request(RequestAbsence command, AbsenceWorkflow workflow, List<Allowance> allowances, Calendar calendar, AbsenceRequestPolicy policy) {
         int requestedDays = calendar.numberOfWorkingDays(command.period());
 
-        if (!policy.satisfiedBy(new RequestedAbsence(command.period(), command.type(), requestedDays, allowances))) {
-            throw new AbsenceRejected();
+        final AbsenceRequestResult result = policy.satisfiedBy(new RequestedAbsence(command.period(), command.type(), requestedDays, allowances));
+        if (result.failed()) {
+            throw new AbsenceRejected(result.reason());
         }
 
         allowances.forEach(a -> a.decreaseBy(requestedDays));

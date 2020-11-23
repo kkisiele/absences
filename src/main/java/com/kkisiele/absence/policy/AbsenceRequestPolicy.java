@@ -1,5 +1,5 @@
 package com.kkisiele.absence.policy;
 
 public interface AbsenceRequestPolicy {
-    boolean satisfiedBy(RequestedAbsence absence);
+    AbsenceRequestResult satisfiedBy(RequestedAbsence absence);
 }

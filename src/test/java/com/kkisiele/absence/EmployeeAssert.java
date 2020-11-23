@@ -37,17 +37,18 @@ public class EmployeeAssert {
         return this;
     }
 
-    public EmployeeAssert doesNotHaveAbsenceRequested() {
-        assertTrue(thrownException().getClass() == AbsenceRejected.class);
-        return this;
-    }
-
     private Employee result() {
         return result.employee;
     }
 
     private Throwable thrownException() {
         return result.thrownException;
+    }
+
+    public EmployeeAssert failedToRequestAbsenceBecauseOf(AbsenceRejectionReason rejectionReason) {
+        AbsenceRejected ex = (AbsenceRejected) thrownException();
+        assertTrue(ex.reason() == rejectionReason);
+        return this;
     }
 
     public static class EmployeeResult {
