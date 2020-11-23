@@ -8,7 +8,7 @@ class DefaultWorkflow implements AbsenceWorkflow {
     }
 
     @Override
-    public AbsenceState initialState() {
+    public AbsenceState initialState(RequestAbsence command) {
         return initialState;
     }
 }

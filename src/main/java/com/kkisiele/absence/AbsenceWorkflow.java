@@ -1,5 +1,5 @@
 package com.kkisiele.absence;
 
 interface AbsenceWorkflow {
-    AbsenceState initialState();
+    AbsenceState initialState(RequestAbsence command);
 }

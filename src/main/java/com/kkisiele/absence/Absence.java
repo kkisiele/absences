@@ -32,7 +32,7 @@ class Absence {
         allowances.forEach(a -> a.decreaseBy(requestedDays));
         this.period = command.period();
         this.type = command.type();
-        this.state = workflow.initialState();
+        this.state = workflow.initialState(command);
         this.deducedDays = command.type().deductible() ? requestedDays : 0;
         this.allowances = List.copyOf(allowances);
     }
