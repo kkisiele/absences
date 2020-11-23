@@ -3,7 +3,6 @@ package com.kkisiele.absence;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EmployeeAssert {
     private final EmployeeResult result;
@@ -37,18 +36,18 @@ public class EmployeeAssert {
         return this;
     }
 
+    public EmployeeAssert failedToRequestAbsenceBecauseOf(AbsenceRejectionReason expectedReason) {
+        AbsenceRejected ex = (AbsenceRejected) thrownException();
+        assertEquals(expectedReason, ex.reason());
+        return this;
+    }
+
     private Employee result() {
         return result.employee;
     }
 
     private Throwable thrownException() {
         return result.thrownException;
-    }
-
-    public EmployeeAssert failedToRequestAbsenceBecauseOf(AbsenceRejectionReason rejectionReason) {
-        AbsenceRejected ex = (AbsenceRejected) thrownException();
-        assertTrue(ex.reason() == rejectionReason);
-        return this;
     }
 
     public static class EmployeeResult {
