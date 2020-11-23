@@ -42,7 +42,7 @@ public class EmployeeBuilder {
     }
 
     public EmployeeBuilder havingAbsence(UUID id, DatePeriod period, AbsenceType type, AbsenceState state) {
-        employee.request(new RequestAbsence(id, period, type), new DefaultWorkflow(state), allowed());
+        employee.request(new RequestAbsence(id, period, type), new InitialAbsenceWorkflow(state), allowed());
         return this;
     }
 
