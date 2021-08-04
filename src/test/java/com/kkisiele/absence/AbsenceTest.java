@@ -62,7 +62,7 @@ public class AbsenceTest {
         givenEmployee()
                 .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
                 .havingUnlimitedDays().handledBy(SICKNESS)
-                .havingAbsence(period("2020-09-01", "2020-09-05"), SICKNESS, APPROVED);
+                .havingRequestedAbsence(period("2020-09-01", "2020-09-05"), SICKNESS);
 
         whenRequestAbsence(period("2020-09-05", "2020-09-10"), HOLIDAY);
 
@@ -98,7 +98,7 @@ public class AbsenceTest {
     void cancellingAbsenceRefundRequestedDays() {
         givenEmployee()
                 .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
-                .havingAbsence("id-1", days(3), HOLIDAY, APPROVED);
+                .havingRequestedAbsence("id-1", days(3), HOLIDAY);
 
         whenCancelAbsence("id-1");
 
@@ -155,6 +155,19 @@ public class AbsenceTest {
                 .failedToRequestAbsenceBecauseOf(NOT_ENOUGH_DAYS_AVAILABLE);
     }
 
+    @Test
+    void approveAbsence() {
+        givenEmployee()
+                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
+                .havingRequestedAbsence("id-1", days(3), HOLIDAY);
+
+        whenApproveAbsence("id-1");
+
+        thenEmployee()
+                .hasApprovedAbsence("id-1")
+                .hasGivenNumberOfRemainingDays("holiday", 23);
+    }
+
     private EmployeeBuilder givenEmployee() {
         this.builder = new EmployeeBuilder(CLOCK);
         return this.builder;
@@ -177,6 +190,10 @@ public class AbsenceTest {
 
     private void whenCancelAbsence(String id) {
         onEmployee(e -> e.cancel(uuid(id)));
+    }
+
+    private void whenApproveAbsence(String id) {
+        onEmployee(e -> e.approve(uuid(id)));
     }
 
     private void onEmployee(Consumer<Employee> callback) {

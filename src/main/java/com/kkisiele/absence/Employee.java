@@ -55,4 +55,8 @@ class Employee {
                          .findFirst().get()
                          .remainingDays();
     }
+
+    public void approve(UUID id) {
+        absences.get(id).approve();
+    }
 }

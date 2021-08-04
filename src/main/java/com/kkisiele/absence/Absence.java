@@ -7,6 +7,7 @@ import com.kkisiele.absence.policy.RequestedAbsence;
 import java.util.List;
 import java.util.UUID;
 
+import static com.kkisiele.absence.AbsenceState.APPROVED;
 import static com.kkisiele.absence.AbsenceState.CANCELLED;
 
 class Absence {
@@ -67,5 +68,9 @@ class Absence {
 
     public boolean overlaps(DatePeriod period) {
         return period.overlaps(period);
+    }
+
+    public void approve() {
+        state = APPROVED;
     }
 }

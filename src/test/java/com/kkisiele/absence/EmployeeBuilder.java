@@ -33,16 +33,16 @@ public class EmployeeBuilder {
         return this;
     }
 
-    public EmployeeBuilder havingAbsence(DatePeriod period, AbsenceType type, AbsenceState state) {
-        return havingAbsence(UUID.randomUUID(), period, type, state);
+    public EmployeeBuilder havingRequestedAbsence(DatePeriod period, AbsenceType type) {
+        return havingRequestedAbsence(UUID.randomUUID(), period, type);
     }
 
-    public EmployeeBuilder havingAbsence(String id, DatePeriod period, AbsenceType type, AbsenceState state) {
-        return havingAbsence(uuid(id), period, type, state);
+    public EmployeeBuilder havingRequestedAbsence(String id, DatePeriod period, AbsenceType type) {
+        return havingRequestedAbsence(uuid(id), period, type);
     }
 
-    public EmployeeBuilder havingAbsence(UUID id, DatePeriod period, AbsenceType type, AbsenceState state) {
-        employee.request(new RequestAbsence(id, period, type), new InitialAbsenceWorkflow(state), allowed());
+    public EmployeeBuilder havingRequestedAbsence(UUID id, DatePeriod period, AbsenceType type) {
+        employee.request(new RequestAbsence(id, period, type), new InitialAbsenceWorkflow(AbsenceState.APPROVED), allowed());
         return this;
     }
 

@@ -1,8 +1,11 @@
 package com.kkisiele.absence;
 
 import java.util.List;
+import java.util.Objects;
 
+import static com.kkisiele.absence.TestFixture.uuid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class EmployeeAssert {
     private final EmployeeResult result;
@@ -22,10 +25,6 @@ public class EmployeeAssert {
         return this;
     }
 
-    private List<Absence> absences() {
-        return result().absences();
-    }
-
     public EmployeeAssert hasGivenNumberOfRequestedAbsences(int count) {
         assertEquals(count, absences().size());
         return this;
@@ -42,12 +41,28 @@ public class EmployeeAssert {
         return this;
     }
 
+    public EmployeeAssert hasApprovedAbsence(String id) {
+        assertNotNull(absence(id));
+        return this;
+    }
+
     private Employee result() {
         return result.employee;
     }
 
     private Throwable thrownException() {
         return result.thrownException;
+    }
+
+    private List<Absence> absences() {
+        return result().absences();
+    }
+
+    private Absence absence(String id) {
+        return absences().stream()
+                         .filter(absence -> Objects.equals(absence.id(), uuid(id)))
+                         .findFirst()
+                         .get();
     }
 
     public static class EmployeeResult {
