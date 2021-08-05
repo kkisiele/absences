@@ -168,6 +168,18 @@ public class AbsenceTest {
                 .hasGivenNumberOfRemainingDays("holiday", 23);
     }
 
+    @Test
+    void declinedAbsenceRefundRequestedDays() {
+        givenEmployee()
+                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
+                .havingRequestedAbsence("id-1", days(3), HOLIDAY);
+
+        whenDeclineAbsence("id-1");
+
+        thenEmployee()
+                .hasGivenNumberOfRemainingDays("holiday", 26);
+    }
+
     private EmployeeBuilder givenEmployee() {
         this.builder = new EmployeeBuilder(CLOCK);
         return this.builder;
@@ -194,6 +206,10 @@ public class AbsenceTest {
 
     private void whenApproveAbsence(String id) {
         onEmployee(e -> e.approve(uuid(id)));
+    }
+
+    private void whenDeclineAbsence(String id) {
+        onEmployee(e -> e.decline(uuid(id)));
     }
 
     private void onEmployee(Consumer<Employee> callback) {

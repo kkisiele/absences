@@ -73,4 +73,8 @@ class Absence {
     public void approve() {
         state = APPROVED;
     }
+
+    public void decline() {
+        allowances.forEach(a -> a.increaseBy(deducedDays));
+    }
 }

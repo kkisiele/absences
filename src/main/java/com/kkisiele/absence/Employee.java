@@ -59,4 +59,9 @@ class Employee {
     public void approve(UUID id) {
         absences.get(id).approve();
     }
+
+    public void decline(UUID id) {
+        absences.get(id).decline();
+        absences.remove(id);
+    }
 }
