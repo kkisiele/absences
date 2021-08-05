@@ -3,7 +3,10 @@ package com.kkisiele.absence;
 import com.kkisiele.absence.policy.AbsenceRequestPolicy;
 
 import java.time.Clock;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.kkisiele.absence.AbsenceRejectionReason.ABSENCE_TYPE_NOT_SUPPORTED;
 import static com.kkisiele.absence.AbsenceRejectionReason.OVERLAPS_EXISTING_ABSENCE;
@@ -12,7 +15,7 @@ class Employee {
     private final Calendar calendar;
     private final Clock clock;
     private final Map<UUID, Absence> absences = new HashMap<>();
-    private Map<AbsenceType, List<Allowance>> allowances = new HashMap<>();
+    private Map<AbsenceType, Allowance> allowances = new HashMap<>();
 
     public Employee(Calendar calendar, Clock clock) {
         this.calendar = calendar;
@@ -20,7 +23,7 @@ class Employee {
     }
 
     public void register(AbsenceType type, Allowance allowance) {
-        allowances.computeIfAbsent(type, t -> new ArrayList<>()).add(allowance);
+        allowances.put(type, allowance);
     }
 
     public void request(RequestAbsence command, AbsenceWorkflow workflow, AbsenceRequestPolicy requestPolicy) {
@@ -48,12 +51,8 @@ class Employee {
         return List.copyOf(absences.values());
     }
 
-    public int remainingDays(String name) {
-        return allowances.values().stream()
-                         .flatMap(List::stream)
-                         .filter(allowance -> allowance.name().equals(name))
-                         .findFirst().get()
-                         .remainingDays();
+    public int remainingDays(AbsenceType type) {
+        return allowances.get(type).remainingDays();
     }
 
     public void approve(UUID id) {

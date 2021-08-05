@@ -4,7 +4,6 @@ import com.kkisiele.absence.policy.AbsenceRequestPolicy;
 import com.kkisiele.absence.policy.AbsenceRequestResult;
 import com.kkisiele.absence.policy.RequestedAbsence;
 
-import java.util.List;
 import java.util.UUID;
 
 import static com.kkisiele.absence.AbsenceState.APPROVED;
@@ -16,33 +15,33 @@ class Absence {
     private AbsenceType type;
     private AbsenceState state;
     private int deducedDays;
-    private List<Allowance> allowances;
+    private Allowance allowance;
 
     public Absence(UUID id) {
         this.id = id;
     }
 
-    public void request(RequestAbsence command, AbsenceWorkflow workflow, List<Allowance> allowances, Calendar calendar, AbsenceRequestPolicy policy) {
+    public void request(RequestAbsence command, AbsenceWorkflow workflow, Allowance allowance, Calendar calendar, AbsenceRequestPolicy policy) {
         int requestedDays = calendar.numberOfWorkingDays(command.period());
 
-        final AbsenceRequestResult result = policy.satisfiedBy(new RequestedAbsence(command.period(), command.type(), requestedDays, allowances));
+        final AbsenceRequestResult result = policy.satisfiedBy(new RequestedAbsence(command.period(), command.type(), requestedDays, allowance));
         if (result.failed()) {
             throw new AbsenceRejected(result.reason());
         }
 
-        allowances.forEach(a -> a.decreaseBy(requestedDays));
+        allowance.decreaseBy(requestedDays);
         this.period = command.period();
         this.type = command.type();
         this.state = workflow.initialState(command);
         this.deducedDays = command.type().deductible() ? requestedDays : 0;
-        this.allowances = List.copyOf(allowances);
+        this.allowance = allowance;
     }
 
     public void cancel() {
         if (state == CANCELLED) {
             throw new IllegalStateException("Cannot cancel already cancelled absence");
         }
-        allowances.forEach(a -> a.increaseBy(deducedDays));
+        allowance.increaseBy(deducedDays);
         state = CANCELLED;
     }
 
@@ -75,6 +74,6 @@ class Absence {
     }
 
     public void decline() {
-        allowances.forEach(a -> a.increaseBy(deducedDays));
+        allowance.increaseBy(deducedDays);
     }
 }

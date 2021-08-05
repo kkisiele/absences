@@ -1,7 +1,8 @@
 package com.kkisiele.absence;
 
 import java.time.Clock;
-import java.util.Arrays;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.UUID;
 
 import static com.kkisiele.absence.TestFixture.uuid;
@@ -9,27 +10,27 @@ import static com.kkisiele.absence.policy.AbsencePolicies.allowed;
 
 public class EmployeeBuilder {
     private final Employee employee;
-    private Allowance allowance;
+    private Deque<Allowance> addedAllowances = new LinkedList<>();
 
     public EmployeeBuilder(Clock clock) {
         this.employee = new Employee(new AllWorkingDaysCalendar(), clock);
     }
 
-    public EmployeeBuilder havingDeductibleDays(int days) {
-        return havingDeductibleDays("default", days);
+    public EmployeeBuilder havingDeductibleDays(AbsenceType type, int days) {
+        return setupAllowance(type, new FixedDaysAllowance(days));
     }
 
-    public EmployeeBuilder havingDeductibleDays(String name, int days) {
-        allowance = new Allowance(name, days);
-        return this;
+    public EmployeeBuilder including(AbsenceType type, int days) {
+        return setupAllowance(type, new CoupledAllowance(new FixedDaysAllowance(days), addedAllowances.getLast()));
     }
 
-    public EmployeeBuilder havingUnlimitedDays() {
-        return havingDeductibleDays(Integer.MAX_VALUE);
+    public EmployeeBuilder havingUnlimitedDays(AbsenceType type) {
+        return setupAllowance(type, new UnlimitedAllowance());
     }
 
-    public EmployeeBuilder handledBy(AbsenceType... types) {
-        Arrays.asList(types).forEach(type -> employee.register(type, allowance));
+    private EmployeeBuilder setupAllowance(AbsenceType type, Allowance allowance) {
+        employee.register(type, allowance);
+        addedAllowances.add(allowance);
         return this;
     }
 

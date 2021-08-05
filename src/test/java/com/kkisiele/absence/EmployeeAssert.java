@@ -30,8 +30,8 @@ public class EmployeeAssert {
         return this;
     }
 
-    public EmployeeAssert hasGivenNumberOfRemainingDays(String name, int days) {
-        assertEquals(days, result().remainingDays(name));
+    public EmployeeAssert hasGivenNumberOfRemainingDays(AbsenceType type, int days) {
+        assertEquals(days, result().remainingDays(type));
         return this;
     }
 

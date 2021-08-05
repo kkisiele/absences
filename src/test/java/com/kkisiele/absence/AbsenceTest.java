@@ -38,7 +38,7 @@ public class AbsenceTest {
     @Test
     void requestingSicknessResultsInApprovedAbsence() {
         givenEmployee()
-                .havingUnlimitedDays().handledBy(SICKNESS);
+                .havingUnlimitedDays(SICKNESS);
 
         whenRequestAbsence(days(3), SICKNESS);
 
@@ -49,7 +49,7 @@ public class AbsenceTest {
     @Test
     void requestingHolidayByEmployeeResultsInApprovalPendingAbsence() {
         givenEmployee()
-                .havingDeductibleDays(26).handledBy(HOLIDAY);
+                .havingDeductibleDays(HOLIDAY, 26);
 
         whenRequestAbsence(days(3), HOLIDAY);
 
@@ -60,8 +60,8 @@ public class AbsenceTest {
     @Test
     void cannotRequestWhenPeriodOverlapsAnyOfExistingAbsences() {
         givenEmployee()
-                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
-                .havingUnlimitedDays().handledBy(SICKNESS)
+                .havingDeductibleDays(HOLIDAY, 26)
+                .havingUnlimitedDays(SICKNESS)
                 .havingRequestedAbsence(period("2020-09-01", "2020-09-05"), SICKNESS);
 
         whenRequestAbsence(period("2020-09-05", "2020-09-10"), HOLIDAY);
@@ -69,24 +69,24 @@ public class AbsenceTest {
         thenEmployee()
                 .failedToRequestAbsenceBecauseOf(OVERLAPS_EXISTING_ABSENCE)
                 .hasGivenNumberOfRequestedAbsences(1)
-                .hasGivenNumberOfRemainingDays("holiday", 26);
+                .hasGivenNumberOfRemainingDays(HOLIDAY, 26);
     }
 
     @Test
     void requestingHolidayDeducesRemainingDays() {
         givenEmployee()
-                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY);
+                .havingDeductibleDays(HOLIDAY, 26);
 
         whenRequestAbsence(days(3), HOLIDAY);
 
         thenEmployee()
-                .hasGivenNumberOfRemainingDays("holiday", 23);
+                .hasGivenNumberOfRemainingDays(HOLIDAY, 23);
     }
 
     @Test
     void cannotRequestMoreDaysThanAvailable() {
         givenEmployee()
-                .havingDeductibleDays("holiday", 2).handledBy(HOLIDAY);
+                .havingDeductibleDays(HOLIDAY, 2);
 
         whenRequestAbsence(days(3), HOLIDAY);
 
@@ -97,19 +97,19 @@ public class AbsenceTest {
     @Test
     void cancellingAbsenceRefundRequestedDays() {
         givenEmployee()
-                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
+                .havingDeductibleDays(HOLIDAY, 26)
                 .havingRequestedAbsence("id-1", days(3), HOLIDAY);
 
         whenCancelAbsence("id-1");
 
         thenEmployee()
-                .hasGivenNumberOfRemainingDays("holiday", 26);
+                .hasGivenNumberOfRemainingDays(HOLIDAY, 26);
     }
 
     @Test
     void cannotRequestAbsenceOutOfGivenPeriod() {
         givenEmployee()
-                .havingDeductibleDays("special", 1).handledBy(SPECIAL);
+                .havingDeductibleDays(SPECIAL, 1);
         givenRequestPolicy(absenceStartsIn(period("2020-09-01", "2020-09-11")));
 
         whenRequestAbsence(period("2020-09-23", "2020-09-23"), SPECIAL);
@@ -121,33 +121,31 @@ public class AbsenceTest {
     @Test
     void absenceCanBeRequestedOnlyInGivenPeriod() {
         givenEmployee()
-                .havingDeductibleDays("special", 1).handledBy(SPECIAL);
+                .havingDeductibleDays(SPECIAL, 1);
         givenRequestPolicy(absenceStartsIn(period("2020-09-01", "2020-09-11")));
 
         whenRequestAbsence(period("2020-09-01"), SPECIAL);
 
         thenEmployee()
-                .hasGivenNumberOfRemainingDays("special", 0);
+                .hasGivenNumberOfRemainingDays(SPECIAL, 0);
     }
 
     @Test
     void onDemandAbsenceDeducesFromBothOnDemandAndHolidayAllowances() {
         givenEmployee()
-                .havingDeductibleDays("on-demand", 4).handledBy(ON_DEMAND)
-                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY, ON_DEMAND);
+                .havingDeductibleDays(HOLIDAY, 26).including(ON_DEMAND, 4);
 
         whenRequestAbsence(period("2020-09-01"), ON_DEMAND);
 
         thenEmployee()
-                .hasGivenNumberOfRemainingDays("on-demand", 3)
-                .hasGivenNumberOfRemainingDays("holiday", 25);
+                .hasGivenNumberOfRemainingDays(ON_DEMAND, 3)
+                .hasGivenNumberOfRemainingDays(HOLIDAY, 25);
     }
 
     @Test
     void cannotRequestMoreOnDemandAbsencesThanAvailable() {
         givenEmployee()
-                .havingDeductibleDays("on-demand", 0).handledBy(ON_DEMAND)
-                .havingDeductibleDays("holiday", 20).handledBy(HOLIDAY, ON_DEMAND);
+                .havingDeductibleDays(HOLIDAY, 20).including(ON_DEMAND, 0);
 
         whenRequestAbsence(period("2020-09-01"), ON_DEMAND);
 
@@ -158,26 +156,26 @@ public class AbsenceTest {
     @Test
     void approveAbsence() {
         givenEmployee()
-                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
+                .havingDeductibleDays(HOLIDAY, 26)
                 .havingRequestedAbsence("id-1", days(3), HOLIDAY);
 
         whenApproveAbsence("id-1");
 
         thenEmployee()
                 .hasApprovedAbsence("id-1")
-                .hasGivenNumberOfRemainingDays("holiday", 23);
+                .hasGivenNumberOfRemainingDays(HOLIDAY, 23);
     }
 
     @Test
     void declinedAbsenceRefundRequestedDays() {
         givenEmployee()
-                .havingDeductibleDays("holiday", 26).handledBy(HOLIDAY)
+                .havingDeductibleDays(HOLIDAY, 26)
                 .havingRequestedAbsence("id-1", days(3), HOLIDAY);
 
         whenDeclineAbsence("id-1");
 
         thenEmployee()
-                .hasGivenNumberOfRemainingDays("holiday", 26);
+                .hasGivenNumberOfRemainingDays(HOLIDAY, 26);
     }
 
     private EmployeeBuilder givenEmployee() {
