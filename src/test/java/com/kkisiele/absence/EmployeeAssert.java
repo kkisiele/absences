@@ -3,9 +3,9 @@ package com.kkisiele.absence;
 import java.util.List;
 import java.util.Objects;
 
+import static com.kkisiele.absence.AbsenceState.APPROVED;
 import static com.kkisiele.absence.TestFixture.uuid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class EmployeeAssert {
     private final EmployeeResult result;
@@ -42,7 +42,7 @@ public class EmployeeAssert {
     }
 
     public EmployeeAssert hasApprovedAbsence(String id) {
-        assertNotNull(absence(id));
+        assertEquals(APPROVED, absence(id).state());
         return this;
     }
 
